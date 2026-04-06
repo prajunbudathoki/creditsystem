@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Better Auth Core Models ──────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Profile
+  username     String?  @unique
+  bio          String?
+  portfolioUrl String?
+  githubUrl    String?
+  linkedinUrl  String?
+  skills       String[]
+  onboarded    Boolean  @default(false)
+
+  // Admin & Status
+  role         UserRole @default(USER)
+  isSuspended  Boolean  @default(false)
+  lastActiveAt DateTime @default(now())
+
+  // Economy
+  credits      Int @default(5)
+  totalReviews Int @default(0)
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  projects      Project[]
+  feedbacks     Feedback[]          @relation("ReviewerFeedbacks")
+  creditTxns    CreditTransaction[]
+  votes         Vote[]
+  badges        UserBadge[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  password              String?
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+  @@map("verifications")
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+enum ProjectCategory {
+  WEBSITE
+  MOBILE_APP
+  SAAS
+  PORTFOLIO
+  UI_DESIGN
+  STARTUP_IDEA
+  LANDING_PAGE
+  OTHER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+model Project {
+  id            String          @id @default(cuid())
+  userId        String
+  title         String
+  description   String
+  category      ProjectCategory
+  thumbnailUrl  String?
+  liveUrl       String
+  feedbackType  String
+  tags          String[]
+  status        ProjectStatus   @default(ACTIVE)
+  viewCount     Int             @default(0)
+  isFeatured    Boolean         @default(false)
+  isHidden      Boolean         @default(false)
+  reportedCount Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedbacks Feedback[]
+  votes     Vote[]
+
+  @@map("projects")
+}
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+
+model Feedback {
+  id                   String   @id @default(cuid())
+  projectId            String
+  reviewerId           String
+  firstImpression      String
+  whatWorksWell        String
+  whatIsConfusing      String
+  highImpactSuggestion String
+  designScore          Int?
+  usabilityScore       Int?
+  clarityScore         Int?
+  isHelpful            Boolean?
+  creditAwarded        Boolean  @default(false)
+  reportedCount        Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reviewer User    @relation("ReviewerFeedbacks", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, reviewerId])
+  @@map("feedbacks")
+}
+
+// ─── Credit Transactions ──────────────────────────────────────────────────────
+
+enum CreditTxType {
+  EARNED_FEEDBACK
+  SPENT_SUBMIT
+  SPENT_BOOST
+  BONUS_SIGNUP
+  ADMIN_ADJUSTMENT
+}
+
+model CreditTransaction {
+  id          String       @id @default(cuid())
+  userId      String
+  type        CreditTxType
+  amount      Int
+  description String
+  refId       String?
+  createdAt   DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_transactions")
+}
+
+// ─── Votes ────────────────────────────────────────────────────────────────────
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@map("votes")
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────────
+
+enum BadgeSlug {
+  TOP_REVIEWER
+  COMMUNITY_HELPER
+  UI_CRITIC
+  FAST_FEEDBACK
+  FIRST_PROJECT
+  VETERAN_BUILDER
+}
+
+model Badge {
+  id          String    @id @default(cuid())
+  slug        BadgeSlug @unique
+  name        String
+  description String
+  icon        String
+
+  users UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+enum NotificationType {
+  FEEDBACK_RECEIVED
+  CREDIT_EARNED
+  BADGE_AWARDED
+  PROJECT_FEATURED
+  HELPFUL_MARKED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  refId     String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ─── Activity Logs ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
