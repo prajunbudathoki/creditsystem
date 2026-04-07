@@ -28,7 +28,7 @@ export async function submitProject(
 
   const parsed = projectSchema.safeParse(formData);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.errors[0].message };
+    return { success: false, error: parsed.error.issues[0].message };
   }
 
   const user = await db.user.findUnique({ where: { id: session.user.id } });
