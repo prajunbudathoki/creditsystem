@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold">
-          Good morning, {session.user.name.split(" ")[0]} 👋
+         Welcome, {session.user.name.split(" ")[0]} 👋
         </h1>
         <p className="text-muted-foreground mt-1">
           Here&apos;s what&apos;s happening with your projects.
