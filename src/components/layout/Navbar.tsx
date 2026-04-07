@@ -111,13 +111,13 @@ export function Navbar({
               <>
                 <Link
                   href="/sign-in"
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                  className="hidden md:flex px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all"
+                  className="hidden md:flex px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all"
                 >
                   Get Started
                 </Link>
@@ -172,6 +172,24 @@ export function Navbar({
                   Sign Out
                 </button>
               </>
+            )}
+            {!session && (
+              <div className="flex flex-col gap-2 pt-2 border-t border-white/5 mt-2">
+                <Link
+                  href="/sign-in"
+                  onClick={() => setMenuOpen(false)}
+                  className="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMenuOpen(false)}
+                  className="px-4 py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-all text-center"
+                >
+                  Get Started
+                </Link>
+              </div>
             )}
           </motion.div>
         )}
