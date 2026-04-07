@@ -47,7 +47,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <RootClientWrapper session={session}>{children}</RootClientWrapper>
-          <Toaster
+          <Toaster 
             position="bottom-right"
             toastOptions={{
               style: {
