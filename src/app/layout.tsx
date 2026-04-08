@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     default: "BuildLoop — Feedback Exchange for Indie Makers",
     template: "%s | BuildLoop",
   },
+  icons: {
+    icon: "/favicon.ico",
+  },
   description:
     "Give feedback, earn credits, submit your project, get real feedback from indie makers and builders. BuildLoop is the community-powered feedback platform for your apps, websites, and digital products.",
   keywords: [
@@ -47,7 +50,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <RootClientWrapper session={session}>{children}</RootClientWrapper>
-          <Toaster 
+          <Toaster
             position="bottom-right"
             toastOptions={{
               style: {
